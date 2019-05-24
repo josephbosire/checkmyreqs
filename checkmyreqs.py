@@ -61,7 +61,7 @@ def parse_requirements_file(req_file):
                 package_name, version = line.split('==')
                 # lets strip any trailing comments
                 if "#" in version:
-                    version = version[:version.index("#")]
+                    version = version[:version.index("#")].strip()
                 packages[package_name] = version
             else:
                 print(TERMINAL.yellow('{} not pinned to a version, skipping'.format(line)))
