@@ -59,6 +59,10 @@ def parse_requirements_file(req_file):
 
             if '==' in line:
                 package_name, version = line.split('==')
+                #lets strip extras from the package name
+                if "[" in package_name:
+                    package_name = package_name[:package_name.index("[")].strip()
+
                 # lets strip any trailing comments
                 if "#" in version:
                     version = version[:version.index("#")].strip()
