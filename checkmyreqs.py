@@ -38,6 +38,7 @@ IS_COMPATIBLE = 'yes'
 NOT_COMPATIBLE = 'no'
 UNKOWN = 'No Info Available'
 NOT_IN_PYPI = 'Not in pypi'
+SEPRATORS = ["==", ">=", "<=", ">", "<"]
 
 def parse_requirements_file(req_file):
     """
@@ -60,8 +61,16 @@ def parse_requirements_file(req_file):
             if "#" in line:
                 line = line[:line.index("#")].strip()
 
-            if '==' in line:
-                package_name, version = line.split('==')
+            if ";" in line:
+                line = line[:line.index(";")].strip()
+
+            use_separator = None
+            for separator in SEPRATORS:
+                if separator in line:
+                    use_separator = separator
+                    break
+            if use_separator:
+                package_name, version = line.split(use_separator)
                 #lets strip extras from the package name
                 if "[" in package_name:
                     package_name = package_name[:package_name.index("[")].strip()
