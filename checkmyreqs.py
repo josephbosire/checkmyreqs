@@ -56,6 +56,9 @@ def parse_requirements_file(req_file):
                 break
         if line:
             line = line.strip()
+            # lets strip any trailing comments
+            if "#" in line:
+                line = line[:line.index("#")].strip()
 
             if '==' in line:
                 package_name, version = line.split('==')
@@ -63,9 +66,6 @@ def parse_requirements_file(req_file):
                 if "[" in package_name:
                     package_name = package_name[:package_name.index("[")].strip()
 
-                # lets strip any trailing comments
-                if "#" in version:
-                    version = version[:version.index("#")].strip()
                 packages[package_name] = version
             else:
                 print(TERMINAL.yellow('{} not pinned to a version, skipping'.format(line)))
