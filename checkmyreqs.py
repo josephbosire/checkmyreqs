@@ -81,10 +81,10 @@ def check_packages(packages, python_version):
 
         package_info = CLIENT.release_data(package_name, package_version)
         package_releases = CLIENT.package_releases(package_name)
-        if isinstance(package_releases, list):
+        if package_releases:
             latest_release = package_releases[-1]
         else:
-            latest_release = package_releases
+            latest_release = ''
         pkg_status = [package_name, package_version, latest_release]
         if package_releases:
             supported_pythons = get_supported_pythons(package_info)
