@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import errno
+import csv
 
 from blessings import Terminal
 
@@ -33,6 +34,10 @@ CLIENT = ServerProxy('http://pypi.python.org/pypi')
 
 IGNORED_PREFIXES = ['#', 'git+', 'hg+', 'svn+', 'bzr+', '\n', '\r\n']
 
+IS_COMPATIBLE = 'yes'
+NOT_COMPATIBLE = 'no'
+UNKOWN = 'No Info Available'
+NOT_IN_PYPI = 'Not in pypi'
 
 def parse_requirements_file(req_file):
     """
@@ -70,16 +75,20 @@ def check_packages(packages, python_version):
     :param packages: dict of packages names and versions
     :param python_version: python version to be checked for support
     """
-
+    pkg_compatibility_status_list = []
     for package_name, package_version in packages.items():
         print(TERMINAL.bold(package_name))
 
         package_info = CLIENT.release_data(package_name, package_version)
         package_releases = CLIENT.package_releases(package_name)
-
+        if isinstance(package_releases, list):
+            latest_release = package_releases[-1]
+        else:
+            latest_release = package_releases
+        pkg_status = [package_name, package_version, latest_release]
         if package_releases:
             supported_pythons = get_supported_pythons(package_info)
-
+            pkg_status.append(','.join(supported_pythons))
 
             # Some entries list support of Programming Language :: Python :: 3
             # So we also want to check the major revision number of the version 
@@ -88,8 +97,10 @@ def check_packages(packages, python_version):
 
             if python_version in supported_pythons:
                 print(TERMINAL.green('compatible'))
+                pkg_status.append(IS_COMPATIBLE)
             elif major_python_version in supported_pythons:
                 print(TERMINAL.green('compatible'))
+                pkg_status.append(IS_COMPATIBLE)
             else:
                 latest_version = package_releases[0]
                 latest_package_info = CLIENT.release_data(package_name, latest_version)
@@ -104,6 +115,7 @@ def check_packages(packages, python_version):
                         upgrade_available = ' - update to v{} for support'.format(latest_version)
 
                     print(TERMINAL.red('not compatible{}'.format(upgrade_available)))
+                    pkg_status.append(NOT_COMPATIBLE)
                 else:
                     # We get here if there was not compatability information for
                     # the package version we requested
@@ -112,11 +124,14 @@ def check_packages(packages, python_version):
                         upgrade_available = ' - update to v{} for explicit support'.format(latest_version)
 
                     print(TERMINAL.yellow('not specified{}').format(upgrade_available))
+                    pkg_status.append(UNKOWN)
 
         else:
             print(TERMINAL.red('not listed on pypi.python.org'))
-
+            pkg_status.append(NOT_IN_PYPI)
+        pkg_compatibility_status_list.append(pkg_status)
         print('-----')
+    return pkg_compatibility_status_list
 
 
 def get_supported_pythons(package_info):
@@ -154,6 +169,13 @@ def main():
         default='.'.join(map(str, [sys.version_info.major, sys.version_info.minor]))
     )
 
+    parser.add_argument(
+        '-o', '--output', required=False,
+        help='Name of file to output with compatibility status. If not provided output will only be shown in the '
+             'terminal. Usually a csv filename e.g. pacakges.csv',
+        default=False
+    )
+
     args = parser.parse_args()
 
     # If a file wasn't passed in, check if pip freeze has been piped, then try to read requirements.txt
@@ -177,12 +199,23 @@ def main():
 
     print('Checking for compatibility with Python {}'.format(args.python))
 
+    compatibility_list = []
+
     for filepath in args_files:
         print('{0}\r\n*****'.format(filepath.name))
 
         packages = parse_requirements_file(filepath)
-        check_packages(packages, args.python)
+        compatibility_list += check_packages(packages, args.python)
         print('\n')
+
+    if args.output:
+        print("Yes")
+        print(compatibility_list)
+        with open(args.output, "w") as file_handle:
+            writer = csv.writer(file_handle)
+            writer.writerow(['package_name', 'package_version', 'latest_package_releases', 'python_versions_supported', 'is_compatible'])
+            for row in compatibility_list:
+                writer.writerow(row)
 
 
 if __name__ == '__main__':
