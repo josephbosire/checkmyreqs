@@ -26,6 +26,7 @@ There are 3 parameters ::
 
     -f, --files   : comma-separated list of files to check (optional, default is requirements.txt)
     -p, --python  : Python version to check compatibility, example 2.7 or 3.2 (optional, default is system Python)
+    -o, --ouytput : name of csv file to output package compatibility status. Optional parameter it will default to outputing to the console
 
 You can also use ``pip freeze`` to check a Python environment without a requirements file, like so ::
 
