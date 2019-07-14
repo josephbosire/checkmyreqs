@@ -3,7 +3,7 @@
 
 import os
 import sys
-from setuptools import setup, Command
+from setuptools import setup, Command, find_packages
 
 
 APP_NAME = 'checkmyreqs'
@@ -54,7 +54,7 @@ settings.update(
     version=VERSION,
     author='Dustin Collins',
     author_email='dustinrcollins@gmail.com',
-    packages=['tests'],
+    packages=find_packages(),
     scripts=['checkmyreqs'],
     url='https://github.com/dustinmm80/checkmyreqs',
     license='MIT',
